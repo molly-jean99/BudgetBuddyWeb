@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BudgetBuddy</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>BudgetBuddy</h1>
+
+<div class="card">
+    <h3>Balance: {{ balance }}</h3>
+    <h3>Income: {{ income }}</h3>
+    <h3>Expenses: {{ expense }}</h3>
+</div>
+
+<div class="card">
+    <h2>Add Transaction</h2>
+
+    <form action="/add" method="POST">
+        <input name="date" placeholder="Date (optional)">
+        <input name="category" placeholder="Category">
+        <input name="amount" placeholder="Amount">
+
+        <select name="type">
+            <option>Income</option>
+            <option>Expense</option>
+        </select>
+
+        <select name="group">
+            <option>Spending</option>
+            <option>Savings</option>
+        </select>
+
+        <button type="submit">Add</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Transactions</h2>
+
+    <table>
+        <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Category</th>
+            <th>Group</th>
+            <th>Amount</th>
+            <th>Action</th>
+        </tr>
+
+        {% for t in transactions %}
+        <tr>
+            <td>{{ t.date }}</td>
+            <td class="{{ 'income' if t.type == 'Income' else 'expense' }}">
+                {{ t.type }}
+            </td>
+            <td>{{ t.category }}</td>
+            <td>{{ t.group }}</td>
+            <td>${{ t.amount }}</td>
+            <td><a href="/delete/{{ loop.index0 }}">Delete</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+</div>
+
+</body>
+</html>
