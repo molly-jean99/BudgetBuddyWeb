@@ -19,19 +19,16 @@ DATA_FILE = "budget_data.json"
 # ------------------------------
 
 users = {}
-current_user = "guest"transactions = []
+current_user = "guest"
 
 # ------------------------------
 # Save / Load
 # ------------------------------
 
 def save_data():
-    data = {
-        "transactions": transactions
-    }
     with open(DATA_FILE, "w") as f:
+        json.dump(users, f, indent=4)
         json.dump(data, f)
-
 
 def load_data():
     global users
@@ -41,6 +38,22 @@ def load_data():
             users = json.load(f)
     else:
         users = {}
+
+    if current_user not in users:
+        users[current_user] = []
+
+def get_transactions():
+    return users[current_user]
+
+def change_user(event=None):
+    global current_user
+
+    current_user = user_var.get()
+
+    if current_user not in users:
+        users[current_user] = []
+
+    update_ui()
 
 # ------------------------------
 # Add Transaction
@@ -70,7 +83,7 @@ def add_transaction():
         messagebox.showerror("Error", "Invalid amount")
         return
 
-    transactions.append({
+    get_transactions().append({
         "date": date,
         "type": t_type,
         "category": category,
@@ -96,7 +109,7 @@ def delete_transaction():
         return
 
     index = selected[0]
-    transaction = transactions[index]
+    transaction = get_transactions()[index]
 
     confirm = messagebox.askyesno(
         "Confirm Delete",
@@ -105,7 +118,7 @@ def delete_transaction():
     )
 
     if confirm:
-        del transactions[index]
+        del get_transactions()[index]
         save_data()
         update_ui()
 
@@ -117,7 +130,7 @@ def edit_transaction():
         return
 
     index = selected[0]
-    transaction = transactions[index]
+    transaction = get_transactions()[index]
 
     edit_window = tk.Toplevel(root)
     edit_window.title("Edit Transaction")
@@ -187,7 +200,7 @@ def update_ui():
 def update_transactions():
     listbox.delete(0, tk.END)
 
-    for t in transactions:
+    for t in get_transactions():
         symbol = "+" if t["type"] == "Income" else "-"
 
         date = t.get("date", "No Date")
@@ -206,7 +219,7 @@ def update_balance():
     expense = 0
     savings = 0
 
-    for t in transactions:
+    for t in get_transactions():
 
         if t["type"] == "Income":
             income += t["amount"]
@@ -237,6 +250,22 @@ title.pack(pady=10)
 frame = tk.Frame(root, bg="#f2f2f2")
 frame.pack(pady=10)
 
+# User Selection
+
+tk.Label(frame, text="User:", bg="#f2f2f2").grid(row=0, column=0)
+
+user_var = tk.StringVar(value=current_user)
+
+user_box = ttk.Combobox(
+    frame,
+    textvariable=user_var,
+    values=list(users.keys()),
+    width=12
+)
+
+user_box.grid(row=0, column=1)
+user_box.bind("<<ComboboxSelected>>", change_user)
+
 # Type
 
 type_var = tk.StringVar(value="Expense")
@@ -248,7 +277,7 @@ ttk.Combobox(
     values=["Income", "Expense"], 
     width=10,
     state="readonly"
-).grid(row=0, column=1)
+).grid(row=0, column=3)
 
 # Category
 
@@ -261,19 +290,19 @@ category_box = ttk.Combobox(
     values=[],
     width=18
 )
-category_box.grid(row=0, column=3)
+category_box.grid(row=0, column=5)
 
 # Date
 tk.Label(frame, text="Date:", bg="#f2f2f2").grid(row=0, column=4)
 
 date_entry = tk.Entry(frame, width=12)
-date_entry.grid(row=0, column=5)
+date_entry.grid(row=0, column=7)
 
 # Amount
 tk.Label(frame, text="Amount:", bg="#f2f2f2").grid(row=0, column=6)
 
 amount_entry = tk.Entry(frame, width=10)
-amount_entry.grid(row=0, column=7)
+amount_entry.grid(row=0, column=9)
 
 # Group
 tk.Label(frame, text="Group:", bg="#f2f2f2").grid(row=0, column=8)
@@ -284,7 +313,7 @@ ttk.Combobox(
     textvariable=group_var, 
     values=["Savings","Spending"], 
     width=10
-).grid(row=0, column=9)
+).grid(row=0, column=11)
 
 # Button
 
@@ -314,10 +343,5 @@ savings_label.pack()
 listbox = tk.Listbox(root, width=80)
 listbox.pack(pady=10)
 
-# Start
-
-def save_data():
-    with open(DATA_FILE, "w") as f:
-        json.dump(users, f)
-
+load_data()
 root.mainloop()
